@@ -105,28 +105,28 @@ where
 pub struct RTL433Message {
     // Common fields often found in rtl_433 JSON output
     #[serde(default, deserialize_with = "deserialize_timestamp")]
-    time: DateTime<Utc>,
+    pub time: DateTime<Utc>,
     #[serde(default)]
-    model: String,
+    pub model: String,
     #[serde(default, deserialize_with = "deserialize_flexible_id")]
-    id: Option<String>,
+    pub id: Option<String>,
     #[serde(default)]
-    channel: Option<i64>,
+    pub channel: Option<i64>,
     #[serde(default, rename = "temperature_C")]
-    temperature_c: Option<f64>,
+    pub temperature_c: Option<f64>,
     #[serde(default)]
-    humidity: Option<f64>,
+    pub humidity: Option<f64>,
     #[serde(default)]
-    battery_ok: Option<f64>,
+    pub battery_ok: Option<f64>,
     #[serde(default, deserialize_with = "deserialize_yes_no")]
-    test: Option<bool>,
+    pub test: Option<bool>,
     #[serde(default)]
-    mic: String, // Integrity
+    pub mic: String, // Integrity
 
     #[serde(default, rename = "pressure_kPa")]
-    pressure_kpa: Option<f64>,
+    pub pressure_kpa: Option<f64>,
     #[serde(default, rename = "pressure_PSI")]
-    pressure_psi: Option<f64>,
+    pub pressure_psi: Option<f64>,
 }
 
 pub fn start(tx: Sender<RTL433Message>) -> JoinHandle<()> {

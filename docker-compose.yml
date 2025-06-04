@@ -13,6 +13,9 @@ services:
     container_name: meteorolog
     depends_on:
       - influxdb
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_DATABASE=meteo_db
     devices:
       - "/dev/bus/usb:/dev/bus/usb"
     privileged: false
