@@ -1,0 +1,22 @@
+services:
+  influxdb:
+    image: influxdb:1.8
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+    restart: unless-stopped
+  
+  meteorolog:
+    build: ./meteorolog  # Your Rust app Dockerfile is in ./meteorolog
+    container_name: meteorolog
+    depends_on:
+      - influxdb
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"
+    privileged: false
+    restart: unless-stopped
+
+volumes:
+  influxdb_data:
