@@ -20,3 +20,17 @@ services:
       - "/dev/bus/usb:/dev/bus/usb"
     privileged: false
     restart: unless-stopped
+
+  weatherman:
+    build: ./weatherman
+    container_name: weatherman
+    depends_on:
+      - influxdb
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_DATABASE=meteo_db
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    restart: unless-stopped
