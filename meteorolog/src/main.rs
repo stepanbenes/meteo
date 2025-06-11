@@ -11,6 +11,8 @@ async fn main() -> Result<(), influxdb::Error> {
     let url = env::var("INFLUXDB_URL").expect("INFLUXDB_URL not set");
     let influxdb_name = env::var("INFLUXDB_DATABASE").expect("INFLUXDB_DATABASE not set");
 
+    println!("Connecting to InfluxDB at {}", url);
+
     let client = Client::new(&url, "");
 
     // Create database if it doesn't exist

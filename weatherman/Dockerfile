@@ -10,7 +10,7 @@ RUN dotnet restore
 COPY . ./
 
 # Publish the app for release
-RUN dotnet publish -c Release -o out
+RUN dotnet publish -c Release -o out --no-restore
 
 # Runtime stage using .NET 9 ASP.NET runtime (ARM64)
 FROM mcr.microsoft.com/dotnet/aspnet:9.0

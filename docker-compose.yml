@@ -18,7 +18,7 @@ services:
       - INFLUXDB_DATABASE=meteo_db
     devices:
       - "/dev/bus/usb:/dev/bus/usb"
-    privileged: false
+    privileged: true
     restart: unless-stopped
 
   weatherman:
