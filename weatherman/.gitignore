@@ -10,8 +10,8 @@ out/
 *.sln.docstates
 
 ## ASP.NET Core
-appsettings.*.json
-appsettings.Development.json
+#appsettings.*.json
+#appsettings.Development.json
 secrets.json
 
 ## Logs

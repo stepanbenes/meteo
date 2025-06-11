@@ -1,8 +1,18 @@
+using InfluxData.Net.Common.Enums;
+using InfluxData.Net.InfluxDb;
+
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseUrls("http://0.0.0.0:5000");
+
+var influxDbUrl = builder.Configuration["INFLUXDB_URL"];
+var influxDbDatabase = builder.Configuration["INFLUXDB_DATABASE"];
+
+builder.Services.AddSingleton(_ =>
+    new InfluxDbClient(influxDbUrl, "", "", InfluxDbVersion.v_1_3) // no token required in 1.x
+);
 
 var app = builder.Build();
 
+app.UseDeveloperExceptionPage();
 app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -25,6 +35,23 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+app.MapGet("/current-weather", async (InfluxDbClient influx) =>
+{
+    //var result = await influx.Client.QueryAsync("SELECT MEAN(temperature) FROM weather WHERE time > now() - 1h", influxDbDatabase);
+    var result = await influx.Client.QueryAsync("SELECT last(temperature), last(humidity), time FROM weather", influxDbDatabase);
+    return Results.Ok(result);
+});
+
+app.MapGet("/temperature", async (InfluxDbClient influx) =>
+{
+    var result = await influx.Client.QueryAsync("""
+        SELECT mean(temperature) FROM weather 
+        WHERE time >= now() - 24h 
+        GROUP BY time(10m) fill(linear)
+        """, influxDbDatabase);
+    return Results.Ok(result);
+});
 
 app.Run();
 

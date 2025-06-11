@@ -27,10 +27,10 @@ services:
     depends_on:
       - influxdb
     environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
       - INFLUXDB_URL=http://influxdb:8086
       - INFLUXDB_DATABASE=meteo_db
     ports:
       - "5000:5000"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
     restart: unless-stopped
