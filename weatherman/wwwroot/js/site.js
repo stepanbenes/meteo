@@ -51,14 +51,31 @@ function simulateDataUpdate() {
     document.getElementById('humidity-status').textContent = humidityStatus;
 }
 
+function readWeatherData() {
+    // fetch weather data from the server
+    fetch('/api/weather')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('temperature').textContent = data.temperature;
+            document.getElementById('humidity').textContent = data.humidity;
+
+            // Update humidity status
+            const humidityStatus = data.humidity < 30 ? "DRY" : data.humidity > 70 ? "HUMID" : "COMFORTABLE";
+            document.getElementById('humidity-status').textContent = humidityStatus;
+
+            // Update dew point
+            document.getElementById('dew-point').textContent = data.dewPoint + '°C';
+        })
+        .catch(error => console.error('Error fetching weather data:', error));
+}
+
 window.onload = function() {
     // Update timestamp every second
     setInterval(updateTimestamp, 1000);
     updateTimestamp();
 
-    // Simulate data updates every 5 seconds
-    setInterval(simulateDataUpdate, 5000);
-
-    // Initial data simulation
-    simulateDataUpdate();
+    // Fetch new data every minute
+    setInterval(readWeatherData, 60_000);
+    // Initial data fetch
+    readWeatherData();
 };

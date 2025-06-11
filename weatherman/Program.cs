@@ -17,33 +17,23 @@ app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
-app.MapGet("/current-weather", async (InfluxDbClient influx) =>
+app.MapGet("/api/weather", async (InfluxDbClient influx) =>
 {
     //var result = await influx.Client.QueryAsync("SELECT MEAN(temperature) FROM weather WHERE time > now() - 1h", influxDbDatabase);
-    var result = await influx.Client.QueryAsync("SELECT last(temperature), last(humidity), time FROM weather", influxDbDatabase);
-    return Results.Ok(result);
+    var result = await influx.Client.QueryAsync("SELECT last(temperature) AS temperature, last(humidity) AS humidity FROM weather", influxDbDatabase);
+    if (result.SingleOrDefault() is { Values:[[_, double temperature, long humidity]] })
+    {
+        var type_t = temperature as double?;
+        var type_h = humidity as long?;
+        if ((temperature as double?, humidity as long?) is (double t, long h))
+        {
+            return Results.Ok(new WeatherData(t, h));
+        }
+    }
+    return Results.NotFound("No data");
 });
 
-app.MapGet("/temperature", async (InfluxDbClient influx) =>
+app.MapGet("/api/temperature", async (InfluxDbClient influx) =>
 {
     var result = await influx.Client.QueryAsync("""
         SELECT mean(temperature) FROM weather 
@@ -55,7 +45,7 @@ app.MapGet("/temperature", async (InfluxDbClient influx) =>
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+record WeatherData(double Temperature, double Humidity)
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+    public double DewPoint => Humidity > 0 ? Temperature - ((100 - Humidity) / 5) : 0;
+};
