@@ -9,6 +9,9 @@ import datetime
 import time
 from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
+import socket
+import select
+from werkzeug.serving import make_server
 
 picdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pic')
 libdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib')
@@ -203,13 +206,30 @@ def shutdown_display():
         epd7in5_V2.epdconfig.module_exit(cleanup=True)
         logging.info("GPIO and SPI cleaned up.")
 
-# run Flask in a thread
-def flask_thread():
-    app.run(host='0.0.0.0', port=5000, threaded=True, use_reloader=False)
+class FlaskServerThread(threading.Thread):
+    def __init__(self, app):
+        super().__init__()
+        self.server = make_server('0.0.0.0', 5000, app)
+        self.server.socket.setblocking(False)  # non-blocking socket
+        self.ctx = app.app_context()
+        self.ctx.push()
+
+    def run(self):
+        logging.info("Flask server starting...")
+        while not shutdown_requested.is_set():
+            rlist, _, _ = select.select([self.server.socket], [], [], 0.5)
+            if rlist:
+                try:
+                    self.server.handle_request()
+                except socket.error as e:
+                    logging.debug(f"Socket error: {e}")
+        logging.info("Flask server thread exiting.")
+
+flask_server = None
 
 # entrypoint
 def main():
-    global epd, image, draw, font18, font24, font35, font48, temp_history
+    global epd, image, draw, font18, font24, font35, font48, temp_history, flask_server
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
@@ -237,19 +257,22 @@ def main():
     # draw initial screen
     update_display(current_temp, current_humidity, temp_history)
 
-    # start web server
-    t = threading.Thread(target=flask_thread)
-    t.start()
+    # start Flask server thread
+    flask_server = FlaskServerThread(app)
+    flask_server.start()
 
-    # wait for shutdown signal
-    while not shutdown_requested.is_set():
-        time.sleep(1)
+    # wait for shutdown
+    try:
+        while not shutdown_requested.is_set():
+            time.sleep(1)
+    except KeyboardInterrupt:
+        shutdown_requested.set()
 
-    # clean up
+    # cleanup
+    logging.info("Shutdown requested, stopping Flask server...")
+    flask_server.join()
     shutdown_display()
     logging.info("Shutdown complete.")
-    logging.info("Forcing exit...")
-    os.kill(os.getpid(), signal.SIGTERM)
 
 if __name__ == "__main__":
     main()
