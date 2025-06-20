@@ -1,14 +1,19 @@
 using InfluxData.Net.Common.Enums;
 using InfluxData.Net.InfluxDb;
+using weatherman;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var influxDbUrl = builder.Configuration["INFLUXDB_URL"];
 var influxDbDatabase = builder.Configuration["INFLUXDB_DATABASE"];
 
-builder.Services.AddSingleton(_ =>
+builder.Services.AddScoped(_ =>
     new InfluxDbClient(influxDbUrl, "", "", InfluxDbVersion.v_1_3) // no token required in 1.x
 );
+
+builder.Services.AddHostedService<PeriodicDashboardUpdateService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<WeatherDataService>();
 
 var app = builder.Build();
 
@@ -17,6 +22,7 @@ app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+// TODO: use WeatherDataService to get the latest weather data
 app.MapGet("/api/weather", async (InfluxDbClient influx) =>
 {
     //var result = await influx.Client.QueryAsync("SELECT MEAN(temperature) FROM weather WHERE time > now() - 1h", influxDbDatabase);
@@ -33,6 +39,7 @@ app.MapGet("/api/weather", async (InfluxDbClient influx) =>
     return Results.NotFound("No data");
 });
 
+// TODO: use WeatherDataService to get the latest weather data
 app.MapGet("/api/temperature", async (InfluxDbClient influx) =>
 {
     var result = await influx.Client.QueryAsync("""
@@ -44,8 +51,3 @@ app.MapGet("/api/temperature", async (InfluxDbClient influx) =>
 });
 
 app.Run();
-
-record WeatherData(double Temperature, double Humidity)
-{
-    public double DewPoint => Humidity > 0 ? Temperature - ((100 - Humidity) / 5) : 0;
-};
