@@ -12,7 +12,8 @@ PI_IP=192.168.1.60 # morty's IP address
 #scp -r ./target/$TARGET/release/epaper pi@$PI_IP:/home/pi/epaper
 
 echo "updating assets"
-scp -r ./src/.. pi@$PI_IP:/home/pi/meteo-dashboard
+scp -r ./src/. pi@$PI_IP:/home/pi/meteo-dashboard
+scp ./run-meteo-dashboard.sh pi@$PI_IP:/home/pi/run-meteo-dashboard.sh
 #echo "updating epaper script"
 #scp -r ./src/meteo-dashboard.py pi@$PI_IP:/home/pi/epaper-python/examples/epd_7in5_V2_test.py
 

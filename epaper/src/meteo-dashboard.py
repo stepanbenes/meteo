@@ -212,7 +212,7 @@ def main():
     global epd, image, draw, font18, font24, font35, font48, temp_history
 
     signal.signal(signal.SIGINT, signal_handler)
-    #signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     logging.info("Starting E-Paper Display Web Service")
 

@@ -1,0 +1,16 @@
+[Unit]
+Description=Meteo Dashboard Flask App
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi
+ExecStart=/bin/bash /home/pi/run-meteo-dashboard.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
